@@ -50,7 +50,9 @@ def init_db():
         raise e
     finally:
         con.close()
- 
+
+init_db()
+
 # --- State ---
 class AgentState(TypedDict):
     hym_msg: str
