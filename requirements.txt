@@ -1,3 +1,7 @@
 fastapi
 uvicorn
 gunicorn
+langchain
+langchain-openai
+langgraph
+pymysql
