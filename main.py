@@ -42,7 +42,7 @@ def init_db():
                 sys_msg    TEXT,
                 result     TEXT,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
         """)
         con.commit()
     except Exception as e:
@@ -50,8 +50,6 @@ def init_db():
         raise e
     finally:
         con.close()
-
-init_db()
  
 # --- State ---
 class AgentState(TypedDict):
