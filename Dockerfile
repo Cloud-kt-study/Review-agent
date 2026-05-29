@@ -9,6 +9,6 @@ COPY . .
 
 # gunicorn이 uvicorn worker를 실행하는 구조
 CMD ["gunicorn", "main:app", \
-     "--workers", "2", \
+     "--workers", "1", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
      "--bind", "0.0.0.0:8000"]
