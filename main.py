@@ -26,26 +26,31 @@ def get_db():
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", ""),
         database=os.environ.get("DB_NAME", "agentdb"),
-        charset="utf8"
+        charset="utf8mb4"
     )
  
 # --- DB 초기화 ---
 def init_db():
     con = get_db()
-    cur = con.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS agent_log (
-            id         INT PRIMARY KEY AUTO_INCREMENT,
-            hym_msg    TEXT,
-            ai_msg     TEXT,
-            sys_msg    TEXT,
-            result     TEXT,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    con.commit()
-    con.close()
- 
+    try:
+        cur = con.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS agent_log (
+                id         INT PRIMARY KEY AUTO_INCREMENT,
+                hym_msg    TEXT,
+                ai_msg     TEXT,
+                sys_msg    TEXT,
+                result     TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        con.commit()
+    except Exception as e:
+        con.rollback()
+        raise e
+    finally:
+        con.close()
+
 init_db()
  
 # --- State ---
@@ -81,13 +86,18 @@ def build_graph():
 # --- DB 저장 ---
 def save_to_db(state: AgentState):
     con = get_db()
-    cur = con.cursor()
-    cur.execute("""
-        INSERT INTO agent_log (hym_msg, ai_msg, sys_msg, result)
-        VALUES (%s, %s, %s, %s)
-    """, (state["hym_msg"], state["ai_msg"], state["sys_msg"], state["result"]))
-    con.commit()
-    con.close()
+    try:
+        cur = con.cursor()
+        cur.execute("""
+            INSERT INTO agent_log (hym_msg, ai_msg, sys_msg, result)
+            VALUES (%s, %s, %s, %s)
+        """, (state["hym_msg"], state["ai_msg"], state["sys_msg"], state["result"]))
+        con.commit()
+    except Exception as e:
+        con.rollback()  # 트랜잭션 명시적 롤백
+        raise e
+    finally:
+        con.close()     # 에러 나도 반드시 닫힘
  
 # --- API 엔드포인트 ---
 class UserInput(BaseModel):
