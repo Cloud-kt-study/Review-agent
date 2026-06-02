@@ -103,7 +103,7 @@ def save_to_db(state: AgentState):
 class UserInput(BaseModel):
     hym_msg: str
  
-@app.post("/agent")
+@app.post("/api/agent")
 def run_agent(body: UserInput):
     graph = build_graph()
     final_state = graph.invoke({
@@ -119,7 +119,7 @@ def run_agent(body: UserInput):
     }
  
 
-@app.get("/getresult")
+@app.get("/api/getresult")
 def get_results():
     con = get_db()
     try:
