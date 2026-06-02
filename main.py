@@ -118,6 +118,24 @@ def run_agent(body: UserInput):
         "result": final_state["result"]
     }
  
-@app.get("/")
-def root():
-    return {"status": "ok"}
+
+@app.get("/getresult")
+def get_results():
+    con = get_db()
+    try:
+        cur = con.cursor(pymysql.cursors.DictCursor)
+        cur.execute("""
+            SELECT id, hym_msg, ai_msg, sys_msg, result, updated_at
+            FROM agent_log
+            ORDER BY updated_at DESC
+        """)
+        rows = cur.fetchall()
+        return rows
+    except Exception as e:
+        raise e
+    finally:
+        con.close()
+
+# @app.get("/")
+# def root():
+#     return {"status": "ok"}
