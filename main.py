@@ -1,6 +1,4 @@
 import ast
-from dotenv import load_dotenv
-load_dotenv()
 import json
 import os
 from typing import Any, Dict, Literal, Optional, TypedDict
