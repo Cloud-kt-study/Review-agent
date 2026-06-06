@@ -15,9 +15,9 @@ class UserInput(BaseModel):
 
 
 @app.post("/api/analyze")
-def run_agent(body: UserInput):
+async def run_agent(body: UserInput):
     graph = build_graph()
-    final = graph.invoke({
+    final = await graph.ainvoke({
         "review":           body.review,
         "analyzer_result":  None,
         "critic_result":    None,
@@ -39,7 +39,7 @@ def run_agent(body: UserInput):
 
 
 @app.post("/api/batch")
-def run_batch():
+async def run_batch():
     rows = get_unanalyzed_reviews()
     if not rows:
         return {"total": 0, "succeeded": 0, "failed": 0}
@@ -50,7 +50,7 @@ def run_batch():
 
     for row in rows:
         try:
-            final = graph.invoke({
+            final = await graph.ainvoke({
                 "review":           row["review"],
                 "analyzer_result":  None,
                 "critic_result":    None,
