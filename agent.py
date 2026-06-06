@@ -65,7 +65,7 @@ def supervisor_node(state: ReviewState) -> ReviewState:
     }
 
 
-def analyzer_node(state: ReviewState) -> ReviewState:
+async def analyzer_node(state: ReviewState) -> ReviewState:
     review           = state["review"]
     repair_directive = state.get("repair_directive") or ""
     aspect_str       = ", ".join(get_active_aspects())
@@ -84,12 +84,12 @@ def analyzer_node(state: ReviewState) -> ReviewState:
 
     human_msg = f"리뷰: {review}\n수정 지시: {repair_directive}"
 
-    response = llm.invoke([SystemMessage(content=sys_msg), HumanMessage(content=human_msg)])
+    response = await llm.ainvoke([SystemMessage(content=sys_msg), HumanMessage(content=human_msg)])
     parsed   = _parse_dict(response.content, {"items": []})
     return {**state, "analyzer_result": parsed}
 
 
-def critic_node(state: ReviewState) -> ReviewState:
+async def critic_node(state: ReviewState) -> ReviewState:
     prompt = f"""너는 상품 리뷰 분석 결과를 검수하는 Critic Agent다.
 
 [원본 리뷰]
@@ -106,7 +106,7 @@ OK / OUTPUT_ERROR / SCOPE_ERROR / EVIDENCE_ERROR / QUALITY_ERROR
 [출력 형식] dict 1개만:
 {{"verdict": "적합" 또는 "부적합", "reason_code": "...", "reason": "..."}}"""
 
-    response = llm.invoke(prompt)
+    response = await llm.ainvoke(prompt)
     result   = _parse_dict(
         response.content,
         {"verdict": "부적합", "reason_code": "OUTPUT_ERROR", "reason": "파싱 에러"},
