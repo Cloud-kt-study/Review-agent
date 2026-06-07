@@ -64,6 +64,20 @@ def get_active_aspects() -> list[str]:
         con.close()
 
 
+def insert_review(review: str) -> int:
+    con = get_db()
+    try:
+        cur = con.cursor()
+        cur.execute("INSERT INTO reviews (review) VALUES (%s)", (review,))
+        con.commit()
+        return cur.lastrowid
+    except Exception as e:
+        con.rollback()
+        raise e
+    finally:
+        con.close()
+
+
 def save_review(state: dict) -> int:
     items         = (state.get("analyzer_result") or {}).get("items", [])
     critic_result = state.get("critic_result") or {}
