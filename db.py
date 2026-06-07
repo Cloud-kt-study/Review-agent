@@ -24,7 +24,9 @@ def init_db():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS reviews (
                 id             INT PRIMARY KEY AUTO_INCREMENT,
+                product_id     VARCHAR(100),
                 review         TEXT,
+                rating         FLOAT,
                 agent_aspect   TEXT,
                 agent_label    TEXT,
                 agent_evidence TEXT,
@@ -64,11 +66,14 @@ def get_active_aspects() -> list[str]:
         con.close()
 
 
-def insert_review(review: str) -> int:
+def insert_review(product_id: str, review: str, rating: float | None) -> int:
     con = get_db()
     try:
         cur = con.cursor()
-        cur.execute("INSERT INTO reviews (review) VALUES (%s)", (review,))
+        cur.execute(
+            "INSERT INTO reviews (product_id, review, rating) VALUES (%s, %s, %s)",
+            (product_id, review, rating),
+        )
         con.commit()
         return cur.lastrowid
     except Exception as e:
@@ -154,16 +159,17 @@ def get_unanalyzed_reviews() -> list[dict]:
         con.close()
 
 
-def get_all_reviews() -> list[dict]:
+def get_reviews_by_product(product_id: str) -> list[dict]:
     con = get_db()
     try:
         cur = con.cursor(pymysql.cursors.DictCursor)
         cur.execute("""
-            SELECT id, review, agent_aspect, agent_label, agent_evidence,
+            SELECT id, product_id, review, rating, agent_aspect, agent_label, agent_evidence,
                    verdict, reason_code, retry_count, updated_at
               FROM reviews
+             WHERE product_id = %s
              ORDER BY updated_at DESC
-        """)
+        """, (product_id,))
         return cur.fetchall()
     finally:
         con.close()
