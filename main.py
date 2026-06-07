@@ -1,10 +1,18 @@
 from fastapi import BackgroundTasks, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from agent import build_graph
 from db import get_reviews_by_product, init_db, insert_review, update_review
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 init_db()
 
