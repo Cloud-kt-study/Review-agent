@@ -1,9 +1,9 @@
-from fastapi import BackgroundTasks, FastAPI
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from agent import build_graph
-from db import get_reviews_by_product, init_db, insert_review, update_review
+from db import get_product, get_products, get_reviews_by_product, init_db, insert_review, update_review
 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ init_db()
 
 
 class UserInput(BaseModel):
-    product_id:  str
+    product_id:  int
     review:      str
     rating:      float | None = None
     max_retries: int = 2
@@ -46,6 +46,19 @@ async def run_agent(body: UserInput, background_tasks: BackgroundTasks):
     return {"id": review_id}
 
 
+@app.get("/api/products")
+def list_products():
+    return get_products()
+
+
+@app.get("/api/products/{product_id}")
+def get_product_detail(product_id: int):
+    product = get_product(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
 @app.get("/api/reviews/{product_id}")
-def get_reviews(product_id: str):
+def get_reviews(product_id: int):
     return get_reviews_by_product(product_id)
