@@ -294,3 +294,20 @@ def get_reviews_by_product(product_id: int) -> list[dict]:
         return cur.fetchall()
     finally:
         con.close()
+
+
+def get_analyses_by_product(product_id: int) -> list[dict]:
+    con = get_db()
+    try:
+        cur = con.cursor(pymysql.cursors.DictCursor)
+        cur.execute("""
+            SELECT ra.id, ra.review_id, ra.agent_aspect, ra.agent_label, ra.agent_evidence,
+                   ra.verdict, ra.reason_code, ra.retry_count, ra.updated_at
+              FROM review_analyses ra
+              JOIN reviews r ON r.id = ra.review_id
+             WHERE r.product_id = %s
+             ORDER BY ra.updated_at DESC
+        """, (product_id,))
+        return cur.fetchall()
+    finally:
+        con.close()

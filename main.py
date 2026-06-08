@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from agent import build_graph
-from db import get_product, get_products, get_reviews_by_product, init_db, insert_review, save_analysis
+from db import get_analyses_by_product, get_product, get_products, get_reviews_by_product, init_db, insert_review, save_analysis
 
 app = FastAPI()
 
@@ -62,3 +62,8 @@ def get_product_detail(product_id: int):
 @app.get("/api/reviews/{product_id}")
 def get_reviews(product_id: int):
     return get_reviews_by_product(product_id)
+
+
+@app.get("/api/analyses/{product_id}")
+def get_analyses(product_id: int):
+    return get_analyses_by_product(product_id)
