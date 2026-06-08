@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from agent import build_graph
-from db import get_product, get_products, get_reviews_by_product, init_db, insert_review, update_review
+from db import get_product, get_products, get_reviews_by_product, init_db, insert_review, save_analysis
 
 app = FastAPI()
 
@@ -36,7 +36,7 @@ async def _run_agent(review_id: int, review: str, max_retries: int):
         "max_retries":      max_retries,
         "next_agent":       "analyzer",
     })
-    update_review(review_id, final)
+    save_analysis(review_id, final)
 
 
 @app.post("/api/analyze")

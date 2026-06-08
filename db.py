@@ -6,18 +6,18 @@ import pymysql.cursors
 from env import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 
 SAMPLE_PRODUCTS = [
-    (1, "올리브영 비타민C 세럼 50ml", 18900, "산뜻하게 흡수되는 데일리 비타민C 세럼입니다.", "특가"),
-    (2, "영국산 밤 1kg", 12500, "고소하고 달콤한 맛이 좋은 영국산 밤입니다.", None),
-    (3, "NVDIA 주식 10주", 230000, "미래 성장 가능성을 기대해볼 수 있는 상품입니다.", "NEW"),
-    (4, "삼성전자 이재용 회장님과의 식사 1회권", 1000000, "특별한 경험을 원하는 분들을 위한 프리미엄 상품입니다.", None),
-    (5, "VITAHALO LED 아이클리너", 34900, "눈 주변을 편안하게 관리할 수 있는 LED 아이클리너입니다.", "특가"),
-    (6, "자연산 물티슈 100매 1팩", 9900, "일상에서 부담 없이 사용하기 좋은 촉촉한 물티슈입니다.", None),
-    (7, "아르마딜로 파스타", 4500, "간편하게 즐길 수 있는 독특한 풍미의 파스타입니다.", None),
-    (8, "어린이 일회용 장갑 100매", 7800, "아이들이 위생적으로 사용할 수 있는 일회용 장갑입니다.", "NEW"),
-    (9, "케로로 건담 1:1 사이즈", 5710000, "수집가를 위한 대형 사이즈 한정판 피규어 상품입니다.", "NEW"),
-    (10, "두바이 콜드브루", 38800, "진하고 깔끔한 맛을 가진 프리미엄 콜드브루입니다.", "특가"),
-    (11, "쫀득이 슬라임", 3000, "말랑하고 쫀득한 촉감으로 즐기는 슬라임입니다.", None),
-    (12, "아삭아삭 얼음", 100, "시원하고 아삭한 느낌을 주는 재미있는 상품입니다.", "특가"),
+    (1,  "히알루론산 수분 크림 50ml",       24900, "끈적임 없이 촉촉하게 채워주는 고보습 크림입니다.",              "특가"),
+    (2,  "로즈힙 페이셜 오일 30ml",          32000, "풍부한 비타민이 피부 결을 개선해주는 드라이 오일입니다.",       None),
+    (3,  "세라마이드 앰플 에센스 50ml",       28500, "피부 장벽을 강화하고 수분을 가두어 주는 앰플입니다.",          "NEW"),
+    (4,  "알로에 수딩 젤 300ml",              9900,  "자극받은 피부를 즉각 진정시켜 주는 대용량 수딩 젤입니다.",     None),
+    (5,  "콜라겐 보습 마스크팩 10매",         15000, "탄력과 수분을 한 번에 챙길 수 있는 집중 보습 마스크팩입니다.", "특가"),
+    (6,  "라벤더 바디로션 200ml",             13500, "은은한 라벤더 향으로 피부를 부드럽고 촉촉하게 가꿔줍니다.",   None),
+    (7,  "시어버터 핸드크림 50ml",             8900,  "건조한 손을 집중 케어해주는 진한 시어버터 핸드크림입니다.",   "NEW"),
+    (8,  "자스민 퍼퓸 바디워시 300ml",        16800, "풍성한 거품과 은은한 자스민 향이 기분을 환기시켜줍니다.",     None),
+    (9,  "녹차 수분 토너 150ml",              19000, "피부결을 정돈하고 청량한 녹차 성분으로 수분을 보충합니다.",   "NEW"),
+    (10, "레티놀 나이트크림 50ml",            38000, "잠자는 동안 피부를 재생시키는 고농도 레티놀 크림입니다.",     "특가"),
+    (11, "비타민E 선크림 SPF50+ 50ml",        22000, "자외선 차단과 동시에 보습까지 챙겨주는 데일리 선크림입니다.", None),
+    (12, "펩타이드 아이크림 20ml",            31500, "눈가 잔주름과 다크서클을 개선해주는 고기능 아이크림입니다.",  None),
 ]
 
 
@@ -47,10 +47,19 @@ def init_db():
         """)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS reviews (
+                id         INT PRIMARY KEY AUTO_INCREMENT,
+                product_id INT,
+                review     TEXT,
+                rating     FLOAT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_reviews_product
+                    FOREIGN KEY (product_id) REFERENCES products(id)
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS review_analyses (
                 id             INT PRIMARY KEY AUTO_INCREMENT,
-                product_id     INT,
-                review         TEXT,
-                rating         FLOAT,
+                review_id      INT NOT NULL,
                 agent_aspect   TEXT,
                 agent_label    TEXT,
                 agent_evidence TEXT,
@@ -58,8 +67,8 @@ def init_db():
                 reason_code    VARCHAR(50),
                 retry_count    INT DEFAULT 0,
                 updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT fk_reviews_product
-                    FOREIGN KEY (product_id) REFERENCES products(id)
+                CONSTRAINT fk_analyses_review
+                    FOREIGN KEY (review_id) REFERENCES reviews(id)
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
         """)
         cur.executemany("""
@@ -231,7 +240,7 @@ def save_review(state: dict) -> int:
         con.close()
 
 
-def update_review(row_id: int, state: dict):
+def save_analysis(review_id: int, state: dict):
     items         = (state.get("analyzer_result") or {}).get("items", [])
     critic_result = state.get("critic_result") or {}
 
@@ -239,23 +248,18 @@ def update_review(row_id: int, state: dict):
     try:
         cur = con.cursor()
         cur.execute("""
-            UPDATE reviews
-               SET agent_aspect   = %s,
-                   agent_label    = %s,
-                   agent_evidence = %s,
-                   verdict        = %s,
-                   reason_code    = %s,
-                   retry_count    = %s,
-                   updated_at     = CURRENT_TIMESTAMP
-             WHERE id = %s
+            INSERT INTO review_analyses
+                (review_id, agent_aspect, agent_label, agent_evidence,
+                 verdict, reason_code, retry_count)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (
+            review_id,
             json.dumps([i.get("aspect",   "") for i in items], ensure_ascii=False),
             json.dumps([i.get("label",    0)  for i in items], ensure_ascii=False),
             json.dumps([i.get("evidence", "") for i in items], ensure_ascii=False),
             critic_result.get("verdict"),
             state.get("reason_code"),
             state.get("retry_count", 0),
-            row_id,
         ))
         con.commit()
     except Exception as e:
@@ -282,8 +286,7 @@ def get_reviews_by_product(product_id: int) -> list[dict]:
     try:
         cur = con.cursor(pymysql.cursors.DictCursor)
         cur.execute("""
-            SELECT id, product_id, review, rating, agent_aspect, agent_label, agent_evidence,
-                   verdict, reason_code, retry_count, updated_at
+            SELECT id, product_id, review, rating, updated_at
               FROM reviews
              WHERE product_id = %s
              ORDER BY updated_at DESC
