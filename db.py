@@ -166,7 +166,9 @@ def init_db():
             (DB_NAME,),
         )
         product_id_type = cur.fetchone()
-        if product_id_type and product_id_type[0] != "int":
+        if product_id_type is None:
+            cur.execute("ALTER TABLE reviews ADD COLUMN product_id INT")
+        elif product_id_type[0] != "int":
             cur.execute("""
                 UPDATE reviews
                    SET product_id = NULL
